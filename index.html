@@ -35,16 +35,17 @@
 
     #screen-info {
       position: absolute;
-      bottom: 20px; /* Adjusted for better visibility */
-      right: 20px; /* Adjusted for better visibility */
+      display: flex;
+      bottom: 0px;
+      right: 0px;
       z-index: 9999;
-      background: rgba(0, 0, 0, 0.8); /* Slightly darker for better contrast */
+      background: rgba(0, 0, 0, 0.8);
       color: white;
-      padding: 10px 15px; /* Increased padding for readability */
-      border-radius: 8px; /* Slightly rounded corners */
-      font-size: 14px; /* Slightly larger text */
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5); /* Subtle shadow for separation */
-      /* -webkit-app-region: no-drag; Interactive area */
+      padding: 10px 15px;
+      border-radius: 8px;
+      font-size: 14px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+      -webkit-app-region: no-drag;
     }
 
     input[type="range"] {
@@ -54,6 +55,32 @@
     label {
       margin-right: 10px;
     }
+
+    .dimension-inputs {
+      display: flex;
+      gap: 5px;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .dimension-inputs input {
+      width: 70px;
+      text-align: center;
+    }
+
+    .zoom-controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .zoom-controls label {
+      font-size: 14px;
+    }
+
+    .zoom-controls input[type="range"] {
+      width: 200px;
+    }
   </style>
 </head>
 <body>
@@ -62,26 +89,96 @@
       <label for="window-opacity">Window Opacity:</label>
       <input type="range" id="window-opacity" min="0.1" max="1" step="0.01" value="1">
     </div>
-    <div id="screen-info"></div>
+    <div id="screen-info">
+      <div class="dimension-inputs">
+        <label for="screen-width">Width:</label>
+        <input type="number" id="screen-width" value="1920">
+        <label for="screen-height">Height:</label>
+        <input type="number" id="screen-height" value="1080">
+      </div>
+      <div class="zoom-controls">
+        <label for="zoom-level">Zoom:</label>
+        <input type="range" id="zoom-level" min="0.1" max="2" step="0.01" value="1">
+        <span id="zoom-percentage">100%</span>
+      </div>
+    </div>
   </div>
-
 
   <script>
     const { ipcRenderer } = require('electron');
 
-    // Window opacity control
     const windowOpacity = document.getElementById('window-opacity');
     windowOpacity.addEventListener('input', () => {
       ipcRenderer.send('update-opacity', parseFloat(windowOpacity.value));
     });
 
     // Screen dimensions display
-    const screenInfo = document.getElementById('screen-info');
+    const screenWidthInput = document.getElementById('screen-width');
+    const screenHeightInput = document.getElementById('screen-height');
+    const zoomSlider = document.getElementById('zoom-level');
+    const zoomPercentage = document.getElementById('zoom-percentage');
+
+    const targetWidth = 4480;
+    const targetHeight = 2520;
+
+    // Initial content width and height
+    let contentWidth = 1920;
+    let contentHeight = 1080;
+
+    // Function to update the screen info based on zoom factor
     const updateScreenInfo = () => {
-      screenInfo.textContent = `Screen Dimensions: ${window.innerWidth}px x ${window.innerHeight}px`;
+      screenWidthInput.value = Math.floor(contentWidth);
+      screenHeightInput.value = Math.floor(contentHeight);
+      const zoom = parseFloat(zoomSlider.value) * 100;
+      zoomPercentage.innerText = `${zoom.toFixed(0)}%`;
     };
-    window.addEventListener('resize', updateScreenInfo);
-    updateScreenInfo();
+
+    // Zoom slider event
+    zoomSlider.addEventListener('input', (event) => {
+      const zoomFactor = parseFloat(event.target.value);
+      contentWidth = targetWidth * zoomFactor;
+      contentHeight = targetHeight * zoomFactor;
+      updateScreenInfo();
+      ipcRenderer.send('update-zoom', zoomFactor); // Send to Electron to apply zoom
+    });
+
+    // Handle manual width and height changes
+    screenWidthInput.addEventListener('change', (event) => {
+      const newWidth = parseInt(event.target.value);
+      if (newWidth) {
+        contentWidth = newWidth;
+        zoomSlider.value = newWidth / targetWidth; // Adjust zoom based on new width
+        updateScreenInfo();
+      }
+    });
+
+    screenHeightInput.addEventListener('change', (event) => {
+      const newHeight = parseInt(event.target.value);
+      if (newHeight) {
+        contentHeight = newHeight;
+        zoomSlider.value = newHeight / targetHeight; // Adjust zoom based on new height
+        updateScreenInfo();
+      }
+    });
+
+    // Update the dimensions when the window is resized
+    window.addEventListener('resize', () => {
+      contentWidth = window.innerWidth;
+      contentHeight = window.innerHeight;
+      updateScreenInfo();
+    });
+
+    // Listen for Command + R (Mac) or Ctrl + R (Windows/Linux)
+    window.addEventListener('keydown', (event) => {
+      if ((event.metaKey || event.ctrlKey) && event.key === 'r') {
+        // Prevent default refresh
+        event.preventDefault();
+        // Refresh the page
+        ipcRenderer.send('refresh-page');
+      }
+    });
+
+    updateScreenInfo(); // Initial screen info update
   </script>
 </body>
 </html>

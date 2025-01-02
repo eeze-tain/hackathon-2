@@ -46,6 +46,22 @@ app.whenReady().then(() => {
     `);
   });
 
+  // Handle zoom level changes
+  ipcMain.on('update-zoom', (event, zoomLevel) => {
+    browserView.webContents.setZoomFactor(zoomLevel);
+  });
+
+  // Handle manual window size changes
+  ipcMain.on('update-window-size', (event, { width, height }) => {
+    mainWindow.setBounds({ x: mainWindow.getBounds().x, y: mainWindow.getBounds().y, width, height });
+    browserView.setBounds({ x: 0, y: 50, width, height: height - 50 });
+  });
+
+  // Handle page refresh
+  ipcMain.on('refresh-page', () => {
+    browserView.webContents.reload(); // Refresh the BrowserView content
+  });
+
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
