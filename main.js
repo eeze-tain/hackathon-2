@@ -29,7 +29,7 @@ app.whenReady().then(() => {
   browserView.setAutoResize({ width: true, height: true });
 
   // Load the webpage content
-  browserView.webContents.loadURL('http://localhost:3000/eeze');
+  browserView.webContents.loadURL('http://localhost:3000');
 
   // Load the UI controls in the main window
   mainWindow.loadFile('index.html');
