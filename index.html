@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transparent Browser</title>
+  <style>
+    body {
+      margin: 0;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
+      -webkit-app-region: drag;
+    }
+
+    #controls {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      z-index: 1000;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 10px;
+      border-radius: 10px;
+      display: flex;
+      justify-content: space-between;
+      -webkit-app-region: no-drag;
+    }
+
+    #screen-info {
+      position: absolute;
+      bottom: 20px; /* Adjusted for better visibility */
+      right: 20px; /* Adjusted for better visibility */
+      z-index: 9999;
+      background: rgba(0, 0, 0, 0.8); /* Slightly darker for better contrast */
+      color: white;
+      padding: 10px 15px; /* Increased padding for readability */
+      border-radius: 8px; /* Slightly rounded corners */
+      font-size: 14px; /* Slightly larger text */
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5); /* Subtle shadow for separation */
+      /* -webkit-app-region: no-drag; Interactive area */
+    }
+
+    input[type="range"] {
+      width: 150px;
+    }
+
+    label {
+      margin-right: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div id="controls">
+    <div>
+      <label for="window-opacity">Window Opacity:</label>
+      <input type="range" id="window-opacity" min="0.1" max="1" step="0.01" value="1">
+    </div>
+    <div id="screen-info"></div>
+  </div>
+
+
+  <script>
+    const { ipcRenderer } = require('electron');
+
+    // Window opacity control
+    const windowOpacity = document.getElementById('window-opacity');
+    windowOpacity.addEventListener('input', () => {
+      ipcRenderer.send('update-opacity', parseFloat(windowOpacity.value));
+    });
+
+    // Screen dimensions display
+    const screenInfo = document.getElementById('screen-info');
+    const updateScreenInfo = () => {
+      screenInfo.textContent = `Screen Dimensions: ${window.innerWidth}px x ${window.innerHeight}px`;
+    };
+    window.addEventListener('resize', updateScreenInfo);
+    updateScreenInfo();
+  </script>
+</body>
+</html>
